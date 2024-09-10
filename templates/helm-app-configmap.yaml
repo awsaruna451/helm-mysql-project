@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configmap.name }}
+  labels:
+    app: {{ .Values.configmap.name }}
+data:
+  # Example of environment variable configurations
+    {{- range $key, $value := .Values.configmap.values }}
+    {{ $key }}: "{{ $value }}"
+    {{- end }}

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  labels:
+    app: {{ .Values.deployment.name }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.label }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.label }}
+    spec:
+      containers:
+        - name: {{ .Values.deployment.name }}
+          image: {{ .Values.image.repository }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /log
+              name: helm-db-claim
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom :
+                secretKeyRef :
+                  name : {{ .Values.secret.name }}
+                  key :  {{ .Values.secret.keys.password }}
+            - name: MYSQL_DATABASE
+              valueFrom :
+                configMapKeyRef :
+                  name : {{ .Values.configmap.name }}
+                  key :  {{ .Values.configmap.dbnamekey }}
+      volumes:
+        - name: helm-db-claim
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.name }}

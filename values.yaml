@@ -1,0 +1,104 @@
+# Default values for helm-mysql-project.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+deployment:
+  name: helm-db-mysql-deployment
+  label: helm-db-mysql
+
+image:
+  repository: mysql:latest
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+configmap:
+  name: helm-app-config-map
+  dbnamekey: "dbname"
+  values:
+    spring.datasource.driver-class-name: com.mysql.cj.jdbc.Driver
+    spring.jpa.properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    spring.jpa.hibernate.ddl-auto: update
+    dbname: abcbank
+    db.url: helm-mysql-service
+    item.service.url: http://helm-item-app-service:8282
+
+secret:
+  type: Opaque
+  name: helm-app-secret
+  label: helm-app-secret
+  keys:
+    username: "username"
+    password: "password"
+  values:
+    username: cm9vdA==
+    password: YWJjMTIz
+
+persistence:
+  name: helm-app-db-claim-volume
+  label: helm-app-db-claim-volume
+  size: 1Gi
+  storageClass: ""
+  accessModes: "ReadWriteMany"
+service:
+  type: ClusterIP
+  port: 3306
+  targetPort: 3306
+  name: helm-mysql-service
+  label: helm-mysql-service
+  selector:
+    name: helm-db-mysql
+
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
